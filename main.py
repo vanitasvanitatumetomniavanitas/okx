@@ -23,7 +23,7 @@ class BitcoinTradingBot:
         self.position = None
         self.entry_price = None
         self.initial_balance = None
-        self.take_profit_rate = 0.0008
+        self.take_profit_rate = 0.0007
         self.leverage = 50
         self.heartbeat_count = 0
 
@@ -36,9 +36,9 @@ class BitcoinTradingBot:
         """
         try:
             balance = self.exchange.fetch_balance()
-            if 'USDT' in balance and 'total' in balance['USDT']:
+            if 'USDT' in balance and 'free' in balance['USDT']:
                 try:
-                    balance_value = balance['USDT']['total']
+                    balance_value = balance['USDT']['free']
                     # 문자열로 변환 후 float로 변환
                     self.initial_balance = float(str(balance_value))
                     print(f"현재 자산: {self.initial_balance} USDT")
@@ -66,23 +66,23 @@ class BitcoinTradingBot:
                 self.exchange.set_leverage(self.leverage,
                                            self.symbol,
                                            params={
-                                               'mgnMode': 'isolated',
+                                               'mgnMode': 'cross',
                                                'posSide': pos_side,
                                                'lever': str(self.leverage)
                                            })
                 print(f"{pos_side} 포지션 레버리지 설정 완료: {self.leverage}x")
-            print("마진 모드 설정 완료: 격리 마진")
+            print("마진 모드 설정 완료: 교차 마진")
         except Exception as e:
             print(f"거래 설정 중 오류 발생: {e}")
 
     def calculate_stop_loss_rate(self):
         try:
             balance = self.exchange.fetch_balance()
-            if 'USDT' not in balance or 'total' not in balance['USDT']:
+            if 'USDT' not in balance or 'free' not in balance['USDT']:
                 print("Error: Cannot fetch USDT balance")
                 return 0.001
 
-            current_balance = float(str(balance['USDT']['total']))
+            current_balance = float(str(balance['USDT']['free']))
 
             if current_balance <= 0:
                 print("투자 가능한 자본이 없습니다")
@@ -105,10 +105,10 @@ class BitcoinTradingBot:
     def calculate_position_size(self):
         try:
             balance = self.exchange.fetch_balance()
-            if 'USDT' not in balance or 'total' not in balance['USDT']:
+            if 'USDT' not in balance or 'free' not in balance['USDT']:
                 print("Error: Cannot fetch USDT balance")
                 return 0
-            balance_value = float(str(balance['USDT']['total']))
+            balance_value = float(str(balance['USDT']['free']))
 
             available_balance = balance_value * self.investment_ratio
 
@@ -126,7 +126,7 @@ class BitcoinTradingBot:
             position_size = round(position_size, 8)
 
             print(
-                f"Available balance for trading: {available_balance} USDT ({self.investment_ratio*100}% of total)"
+                f"Available balance for trading: {available_balance} USDT ({self.investment_ratio*100}% of free)"
             )
             print(f"Calculated position size: {position_size} BTC")
             return position_size
@@ -317,8 +317,8 @@ class BitcoinTradingBot:
             try:
                 balance = self.exchange.fetch_balance()
                 current_balance = float(
-                    str(balance['USDT']['total'])
-                ) if 'USDT' in balance and 'total' in balance['USDT'] else 0.0
+                    str(balance['USDT']['free'])
+                ) if 'USDT' in balance and 'free' in balance['USDT'] else 0.0
                 available_for_trading = current_balance * self.investment_ratio
 
                 print("\n" + "=" * 50)
